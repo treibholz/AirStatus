@@ -1,4 +1,5 @@
 from bleak import discover
+from bleak.exc import BleakDBusError
 from asyncio import new_event_loop, set_event_loop, get_event_loop
 from time import sleep, time_ns
 from binascii import hexlify
@@ -129,16 +130,20 @@ def run():
     output_file = argv[-1]
 
     while True:
-        data = get_data()
+        try:
+            data = get_data()
 
-        if data["status"] == 1:
-            json_data = dumps(data)
-            if len(argv) > 1:
-                f = open(output_file, "a")
-                f.write(json_data+"\n")
-                f.close()
-            else:
-                print(json_data)
+            if data["status"] == 1:
+                json_data = dumps(data)
+                if len(argv) > 1:
+                    f = open(output_file, "a")
+                    f.write(json_data+"\n")
+                    f.close()
+                else:
+                    print(json_data)
+        except BleakDBusError:
+            # do nothing
+            sleep(10)
 
         sleep(UPDATE_DURATION)
 
