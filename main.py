@@ -1,3 +1,4 @@
+import os
 from bleak import discover
 from bleak.exc import BleakDBusError
 from asyncio import new_event_loop, set_event_loop, get_event_loop
@@ -8,7 +9,7 @@ from sys import argv
 from datetime import datetime
 
 # Configure update duration (update after n seconds)
-UPDATE_DURATION = 1
+UPDATE_DURATION = 5
 MIN_RSSI = -60
 AIRPODS_MANUFACTURER = 76
 AIRPODS_DATA_LENGTH = 54
@@ -141,6 +142,9 @@ def run():
                     f.close()
                 else:
                     print(json_data)
+                status = open("/run/user/{}/airpods_status.json".format(os.getuid()), "w")
+                status.write(json_data)
+                status.close()
         except BleakDBusError:
             # do nothing
             sleep(10)
