@@ -9,13 +9,30 @@ from sys import argv
 from datetime import datetime
 
 # Configure update duration (update after n seconds)
-UPDATE_DURATION = 5
+UPDATE_DURATION = 1
 MIN_RSSI = -60
 AIRPODS_MANUFACTURER = 76
 AIRPODS_DATA_LENGTH = 54
 RECENT_BEACONS_MAX_T_NS = 10000000000  # 10 Seconds
 
 recent_beacons = []
+
+# maybe put this in a class...
+MODEL_DICT = {  'e':    "AirPodsPro",
+                'f':    "AirPods2",
+                '2':    "AirPods1",
+                'a':    "AirPodsMax",
+                'b':    "PowerbeatsPro",
+                '5':    "BeatsX",
+                '0':    "BeatsFlex",
+                '6':    "BeatsSolo3",
+                '9':    "BeatsStudio3",
+                '3':    "Powerbeats3",
+                '*':    "unknown ({})"
+            }
+
+def identify_model(_model):
+    return MODEL_DICT.setdefault(_model, MODEL_DICT['*'].format(_model))
 
 
 def get_best_result(device):
@@ -48,8 +65,7 @@ async def get_device():
         d = get_best_result(d)
         if d.rssi >= MIN_RSSI and AIRPODS_MANUFACTURER in d.metadata['manufacturer_data']:
             data_hex = hexlify(bytearray(d.metadata['manufacturer_data'][AIRPODS_MANUFACTURER]))
-            data_length = len(hexlify(bytearray(d.metadata['manufacturer_data'][AIRPODS_MANUFACTURER])))
-            if data_length == AIRPODS_DATA_LENGTH:
+            if len(data_hex) == AIRPODS_DATA_LENGTH:
                 return data_hex
     return False
 
@@ -65,7 +81,6 @@ def get_data_hex():
 
 
 # Getting data from hex string and converting it to dict(json)
-# Getting data from hex string and converting it to dict(json)
 def get_data():
     raw = get_data_hex()
 
@@ -76,16 +91,7 @@ def get_data():
     flip: bool = is_flipped(raw)
 
     # On 7th position we can get AirPods model, gen1, gen2, Pro or Max
-    if chr(raw[7]) == 'e':
-        model = "AirPodsPro"
-    elif chr(raw[7]) == 'f':
-        model = "AirPods2"
-    elif chr(raw[7]) == '2':
-        model = "AirPods1"
-    elif chr(raw[7]) == 'a':
-        model = "AirPodsMax"
-    else:
-        model = "unknown"
+    model = identify_model(chr(raw[7]))
 
     # Checking left AirPod for availability and storing charge in variable
     status_tmp = int("" + chr(raw[12 if flip else 13]), 16)
