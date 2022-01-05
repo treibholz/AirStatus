@@ -1,0 +1,10 @@
+[Unit]
+Description=AirStatus - Check your AirPods battery level on Linux
+
+[Service]
+ExecStart={{python_path}} {{airstatus_path}}/main.py
+Restart=always
+
+[Install]
+WantedBy=basic.target
+
